@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+/* ONLY DARK MODE, NO LIGHT MODE. */
+@theme {
+    --color-main: #1F1F1F;
+    --color-ui: #F7F7F7;
+}
+
+@layer {
+    .page {
+        @apply min-h-screen w-full;
+        @apply text-ui;
+        @apply bg-main;
+    }
+}
