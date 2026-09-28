@@ -1,0 +1,34 @@
+---
+// images
+import wordmark from '../../assets/goalden/wordmark.svg'
+import tagline from '../../assets/goalden/tagline.svg'
+import tagline2 from '../../assets/goalden/tagline2.svg'
+import tagline22 from '../../assets/goalden/tagline22.svg'
+
+// components
+import Button from '../UI/button/Landing.astro'
+
+import { Icon } from 'astro-icon/components'
+
+---
+<section class="w-full md:h-200 bg-main flex p-5 border border-white/10 rounded-xl justify-items-center">
+    <div class="flex flex-col p-10 my-auto w-full">
+        <div class="flex flex-col md:flex-row items-center w-full">
+            <img class="mr-auto w-100 py-5" src={wordmark.src} >
+            <img class="ml-auto -skew-x-10 w-100" src={tagline.src} >
+        </div>
+        
+        <!-- iCONS -->
+        <!-- <div class="py-5 text-2xl px-2 flex items-center gap-2">
+            <a><Icon name="akar-icons:github-fill"/></a>
+        </div> -->
+    </div>
+</section>
+
+<div class="flex flex-col md:flex-row items-center justify-center text-4xl md:text-8xl px-10">
+    <img class="hidden md:flex m-auto md:p-10 md:mr-auto w-100" src={tagline2.src} >
+    <img class="md:hidden p-10 w-100" src={tagline22.src} >
+    <div class="m-auto md:ml-auto text-main hover:text-ui">
+        <Button link={{label: "Start Now", href:"/login"}} />
+    </div>
+</div>

@@ -15,11 +15,16 @@
     "@astrojs/svelte": "^9.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.5",
+    "astro-icon": "^1.2.0",
     "svelte": "^5.57.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3"
   },
   "allowScripts": {
     "esbuild": true
+  },
+  "devDependencies": {
+    "@iconify-json/akar-icons": "^1.2.7",
+    "@iconify/json": "^2.2.534"
   }
 }

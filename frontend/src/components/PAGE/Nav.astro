@@ -1,0 +1,26 @@
+---
+import wordmark from '../../assets/goalden/wordmark.svg'
+const { showLogo = true } = Astro.props
+---
+
+<main class="flex items-center px-5 py-3">
+    {showLogo && (
+        <div class="w-30 hidden md:flex">
+            <img src={wordmark.src}>
+        </div>
+        <div class="ml-auto hidden md:flex items-center gap-2">
+            <a href="/goals"   class="min-w-15 text-center px-2 py-1 rounded-[5px]">Goals</a>
+            <a href="/options" class="min-w-15 text-center px-2 py-1 rounded-[5px]">Options</a>
+            <a href="/profile" class="min-w-15 text-center px-2 py-1 rounded-[5px]">Profile</a>
+        </div>
+    )}
+
+    {!showLogo && (
+        <div class="m-auto flex items-center gap-2">
+            <a href="/goals"   class="min-w-15 text-center px-2 py-1 rounded-[5px]">Goals</a>
+            <a href="/options" class="min-w-15 text-center px-2 py-1 rounded-[5px]">Options</a>
+            <a href="/profile" class="min-w-15 text-center px-2 py-1 rounded-[5px]">Profile</a>
+        </div>
+    )}
+    
+</main>

@@ -1,0 +1,11 @@
+---
+const { link = { label: "Start Now", href: "/goals" } } = Astro.props;
+---
+
+<div class="group w-fit relative h-fit z-100">
+    <div class="md:w-[110%] w-[105%] h-full flex md:hidden -skew-y-2 translate-y-0.5 -left-1 bg-select scale-x-100 md:scale-x-0 origin-left absolute duration-200 group-hover:scale-x-100"></div>
+    <div class="md:w-[110%] w-[105%] h-full hidden md:flex -left-1 bg-select scale-x-100 md:scale-x-0 origin-left absolute duration-200 group-hover:scale-x-100"></div>
+    <a href={link.href} class="font-tagline relative">
+        {link.label}
+    </a>
+</div>
