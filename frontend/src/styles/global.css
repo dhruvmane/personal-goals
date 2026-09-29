@@ -3,6 +3,7 @@
 /* ONLY DARK MODE, NO LIGHT MODE. */
 @theme {
     --color-main: #F2F2F0;
+    --color-secondary: #FFA666;
     --color-black: #28282B;
     --background-image-void: linear-gradient(90deg,rgba(18, 18, 18, 1) 0%, rgba(0, 0, 0, 1) 75%);
     --color-select: #5C5C51;
@@ -25,6 +26,10 @@
         @apply text-ui font-ui;
         @apply bg-void;
     }   
+
+    .modern-border {
+        @apply border border-white/10 rounded-xl;
+    }
 
     .foo {
         @apply text-ui font-ui;

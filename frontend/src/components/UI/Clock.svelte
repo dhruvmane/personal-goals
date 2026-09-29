@@ -1,6 +1,12 @@
 <script lang="ts">
-    const datetime = new Date();
-    const timeFormat = datetime.toLocaleTimeString()
+    import { onMount } from 'svelte'
+
+    let now = $state(new Date());
+
+    onMount(() => {
+        const timer = setInterval(() => (now = new Date()), 30_000);
+        return () => clearInterval(timer);
+    });
 </script>
 
-<p>{timeFormat}</p>
+<!-- <time datetime={now.toISOString()}>{now.toLocaleTimeString()}</time> -->

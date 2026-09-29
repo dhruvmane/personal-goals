@@ -4,7 +4,7 @@ import type { AuthResponse, LoginInput, RegisterInput, User } from "./types";
 
 let user = $state<User | null>(null);
 let ready = $state(false);
-let restoreStarted = false;
+let restoreInFlight: Promise<void> | null = null;
 
 function store(auth: AuthResponse): User {
     writeTokens({ token: auth.token, refreshToken: auth.refreshToken });
@@ -12,10 +12,7 @@ function store(auth: AuthResponse): User {
     return auth.user;
 }
 
-async function restore(): Promise<void> {
-    if (restoreStarted) return;
-    restoreStarted = true;
-
+async function runRestore(): Promise<void> {
     if (!readTokens()) {
         ready = true;
         return;
@@ -31,6 +28,13 @@ async function restore(): Promise<void> {
     } finally {
         ready = true;
     }
+}
+
+function restore(): Promise<void> {
+    // Every caller awaits the same attempt, so several components mounting at once
+    // cannot race into duplicate /api/auth/me calls or read a half restored session.
+    restoreInFlight ??= runRestore();
+    return restoreInFlight;
 }
 
 onSessionExpired(() => {

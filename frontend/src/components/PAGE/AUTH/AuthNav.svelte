@@ -30,7 +30,7 @@
         <button
             onclick={signOut}
             disabled={signingOut}
-            class="min-w-15 text-center px-2 py-1 rounded-[5px] border border-white/15
+            class="min-w-15 text-center px-2 py-1 rounded-[5px]
                    hover:bg-white/10 transition-colors disabled:opacity-50"
         >
             {signingOut ? '...' : 'Sign out'}
@@ -39,7 +39,7 @@
 {:else}
     <a
         href="/login"
-        class="min-w-15 text-center px-2 py-1 rounded-[5px] border border-white/15 hover:bg-white/10 transition-colors"
+        class="min-w-15 text-center px-2 py-1 rounded-[5px] hover:bg-white/10 transition-colors"
     >
         Sign in
     </a>
