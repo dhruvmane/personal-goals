@@ -30,6 +30,23 @@ Run tests (in-memory H2, no database needed):
 - Flyway owns the schema; Hibernate only runs `ddl-auto=validate`. Never edit an
   applied migration, add a new one.
 
+## Auth
+
+Access tokens are short lived JWTs. Refresh tokens are longer lived JWTs whose SHA-256
+hash is stored in `refresh_tokens`, so a database leak cannot be replayed against the API.
+
+- Every token carries a `typ` claim (`access` or `refresh`) and `JwtService.parseUserId`
+  requires the expected one. A refresh token must never authenticate a normal request.
+- Refreshing rotates: the presented token is marked rotated and a fresh pair is issued.
+  Presenting an already rotated token means the secret leaked, so every session for that
+  user is revoked.
+- `AuthService.refresh` is annotated `noRollbackFor = BadCredentialsException`. The
+  revocation that happens during reuse detection must survive the 401 it returns, so
+  removing that would silently disable compromise response.
+- Changing a password revokes that user's refresh tokens.
+- Endpoints: `POST /api/auth/register`, `/login`, `/refresh`, `/logout`, `GET /api/auth/me`.
+  All four POSTs are public; the client holds the refresh token and retries on 401.
+
 ## Configuration
 
 Secrets come from `.env` (gitignored, copy from `.env.example`). Spring Boot loads it

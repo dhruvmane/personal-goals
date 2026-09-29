@@ -1,0 +1,12 @@
+---
+import Layout from '../../layouts/Barebones.astro'
+import wordmark from '../../assets/goalden/wordmark-white.svg'
+
+import Login from '../../components/PAGE/AUTH/Login.svelte'
+---
+<Layout showIcon={true}>
+    <div class="w-full h-full justify-items-center m-auto">
+        <img src={wordmark.src} class="w-150">
+        <Login client:load />
+    </div>
+</Layout>

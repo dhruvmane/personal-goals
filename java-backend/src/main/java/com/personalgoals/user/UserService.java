@@ -1,5 +1,6 @@
 package com.personalgoals.user;
 
+import com.personalgoals.auth.AuthService;
 import com.personalgoals.common.ConflictException;
 import com.personalgoals.common.Emails;
 import com.personalgoals.common.NotFoundException;
@@ -15,10 +16,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthService authService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authService = authService;
     }
 
     public List<UserResponse> list() {
@@ -49,6 +52,8 @@ public class UserService {
 
         if (request.hasPassword()) {
             user.changePasswordHash(passwordEncoder.encode(request.password()));
+            // Any refresh token issued before this change must stop working immediately.
+            authService.revokeAllForUser(id);
         }
 
         if (request.hasRole()) {

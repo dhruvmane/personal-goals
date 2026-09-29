@@ -11,6 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.personalgoals.user.Role;
+import com.personalgoals.user.UserRepository;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -28,6 +31,9 @@ class ApiIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Test
     void health_isPublic() throws Exception {
@@ -53,6 +59,12 @@ class ApiIntegrationTest {
 
         String registerToken = token(registered);
         assertThat(registerToken).isNotBlank();
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new RefreshPayload(json(registered).get("refreshToken").asText()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty());
 
         MvcResult loggedIn = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -204,6 +216,150 @@ class ApiIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void refreshRotatesTokensAndIssuesAUsablePair() throws Exception {
+        MvcResult registered = register("rotate");
+        String firstRefresh = refreshToken(registered);
+
+        MvcResult refreshed = mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshPayload(firstRefresh))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andReturn();
+
+        String rotatedRefresh = refreshToken(refreshed);
+        assertThat(rotatedRefresh).isNotEqualTo(firstRefresh);
+
+        // The rotated access token works against a protected route.
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "Bearer " + token(refreshed)))
+                .andExpect(status().isOk());
+
+        // The superseded refresh token is dead.
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshPayload(firstRefresh))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void reuseOfRotatedRefreshTokenRevokesEverySession() throws Exception {
+        MvcResult registered = register("reuse");
+        String stolen = refreshToken(registered);
+
+        MvcResult refreshed = mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshPayload(stolen))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // Attacker replays the already-rotated token.
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshPayload(stolen))))
+                .andExpect(status().isUnauthorized());
+
+        // Reuse is treated as a compromise, so even the legitimate newest token is revoked.
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshPayload(refreshToken(refreshed)))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void refusesToSwapTokenTypes() throws Exception {
+        MvcResult registered = register("swap");
+
+        // An access token must not be redeemable at the refresh endpoint.
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshPayload(token(registered)))))
+                .andExpect(status().isUnauthorized());
+
+        // A refresh token must never authenticate a normal request.
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "Bearer " + refreshToken(registered)))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/api/goals")
+                        .header("Authorization", "Bearer " + refreshToken(registered)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void rejectsUnknownRefreshToken() throws Exception {
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshPayload("nonsense"))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logoutRevokesTheRefreshToken() throws Exception {
+        MvcResult registered = register("logout");
+        String refresh = refreshToken(registered);
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshPayload(refresh))))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshPayload(refresh))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logoutWithAnUnusableTokenStillSucceeds() throws Exception {
+        mockMvc.perform(post("/api/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RefreshPayload("nonsense"))))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void changingPasswordRevokesExistingSessions() throws Exception {
+        MvcResult registered = register("pwchange");
+        String userId = json(registered).get("user").get("id").asText();
+        String email = json(registered).get("user").get("email").asText();
+
+        promoteToAdmin(userId);
+
+        mockMvc.perform(put("/api/users/" + userId)
+                        .header("Authorization", "Bearer " + token(registered))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new UpdateUserPayload("brand-new-password"))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new RefreshPayload(refreshToken(registered)))))
+                .andExpect(status().isUnauthorized());
+
+        // The old password no longer works, the new one does.
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginPayload(email, "s3cret-pass"))))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginPayload(email, "brand-new-password"))))
+                .andExpect(status().isOk());
+    }
+
+    private void promoteToAdmin(String userId) {
+        userRepository.findById(UUID.fromString(userId)).ifPresent(user -> {
+            user.changeRole(Role.ADMIN);
+            userRepository.save(user);
+        });
+    }
+
     private MvcResult register(String prefix) throws Exception {
         String email = prefix + "-" + System.nanoTime() + "@example.com";
         return mockMvc.perform(post("/api/auth/register")
@@ -217,6 +373,10 @@ class ApiIntegrationTest {
         return json(result).get("token").asText();
     }
 
+    private String refreshToken(MvcResult result) throws Exception {
+        return json(result).get("refreshToken").asText();
+    }
+
     private JsonNode json(MvcResult result) throws Exception {
         return objectMapper.readTree(result.getResponse().getContentAsString());
     }
@@ -225,6 +385,12 @@ class ApiIntegrationTest {
     }
 
     private record LoginPayload(String email, String password) {
+    }
+
+    private record RefreshPayload(String refreshToken) {
+    }
+
+    private record UpdateUserPayload(String password) {
     }
 
     private record GoalPayload(String title, String description, String status, int progress, String targetDate) {

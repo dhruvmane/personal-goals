@@ -1,0 +1,12 @@
+---
+import Layout from '../../layouts/Barebones.astro'
+import wordmark from '../../assets/goalden/wordmark-white.svg'
+
+import Create from '../../components/PAGE/AUTH/Create.svelte'
+---
+<Layout showIcon={true}>
+    <div class="w-full h-full justify-items-center m-auto">
+        <img src={wordmark.src} class="w-150">
+        <Create client:load />
+    </div>
+</Layout>

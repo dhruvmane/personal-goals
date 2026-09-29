@@ -4,8 +4,12 @@
 // import css for tailwind on whole page
 import "../styles/global.css";
 
+// components
+import Nav from '../components/PAGE/Nav.astro'
+import Foo from '../components/PAGE/Foo.astro'
+
 // title prop for changing page title
-const { title = "goals.io" } = Astro.props
+const { title = "goalden, your personal goals tracker" } = Astro.props
 ---
 
 
@@ -18,7 +22,13 @@ const { title = "goals.io" } = Astro.props
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
 	</head>
-	<body class="page">
-        <slot />
+	<body class="relative">
+	    <div class="page">
+	        <Nav showLogo={true} />
+		    <slot />
+		</div>
+		<div class="foo">
+		    <Foo />
+		</div>
 	</body>
 </html>

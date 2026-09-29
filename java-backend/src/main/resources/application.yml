@@ -33,6 +33,7 @@ spring:
 jwt:
   secret: ${JWT_SECRET:}
   expires-in: ${JWT_EXPIRES_IN:PT12H}
+  refresh-expires-in: ${JWT_REFRESH_EXPIRES_IN:P30D}
   issuer: ${JWT_ISSUER:personal-goals-api}
 
 cors:
