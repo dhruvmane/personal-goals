@@ -1,0 +1,22 @@
+# Copy to `.env` and fill in real values. `.env` is gitignored - never commit secrets.
+# Get these from the Neon Console: https://console.neon.tech
+# Use the "-pooler" hostname for the pooled connection string (better for a server), or
+# the direct hostname for migrations. Both work with this setup.
+
+DATABASE_URL="postgresql://neondb_owner:npg_AhZpRSE7CqQ9@ep-empty-sunset-axfehxsm-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+DATABASE_USER=neondb_owner
+DATABASE_PASSWORD=npg_Xz6clf2FjvDI
+
+# Must be at least 32 characters. Generate one with:
+#   node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+JWT_SECRET=SpUKfGCzLZnKuq-_8vp6-OQiik26GQUCy113enu4i9egaA1uaRw4QUJEjjtPHMkH
+# Token lifetime as a duration (PT12H = 12 hours)
+JWT_EXPIRES_IN=PT12H
+# Refresh token lifetime as a duration (P30D = 30 days). Each refresh rotates the
+# token and revokes the previous one, so this is the max length of a login session.
+JWT_REFRESH_EXPIRES_IN=P30D
+
+# Where the Astro frontend is served. Comma-separated for multiple origins.
+CORS_ALLOWED_ORIGINS=http://localhost:4321
+
+SERVER_PORT=8080

@@ -1,0 +1,9 @@
+com\personalgoals\ApiIntegrationTest$RegisterPayload.class
+com\personalgoals\ApiIntegrationTest$GoalPayload.class
+com\personalgoals\ApiIntegrationTest$LoginPayload.class
+com\personalgoals\ApiIntegrationTest$UpdateUserPayload.class
+com\personalgoals\CrossOriginApiTest.class
+com\personalgoals\ApiIntegrationTest$RefreshPayload.class
+com\personalgoals\ApiIntegrationTest$UpdateGoalPayload.class
+com\personalgoals\ApiIntegrationTest.class
+com\personalgoals\config\DotEnvEnvironmentPostProcessorTest.class
