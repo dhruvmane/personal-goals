@@ -2,8 +2,6 @@ package com.personalgoals.config;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.properties.source.ConfigurationPropertySources;
 import org.springframework.boot.env.EnvironmentPostProcessor;
@@ -15,17 +13,13 @@ import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
 
 /**
- * Makes the imported {@code .env} file behave the way a dotenv file is expected to, so a
- * Neon connection string can be pasted in verbatim.
+ * Makes the imported {@code .env} file behave the way a dotenv file is expected to: Spring
+ * reads {@code .env} as a Java properties file, so surrounding quotes would otherwise stay
+ * part of the value.
  *
- * <p>Spring reads {@code .env} as a Java properties file, which differs from dotenv in two
- * ways that both break a pasted connection string: surrounding quotes stay part of the
- * value, and a {@code postgresql://} URI is not a JDBC URL.
- *
- * <p>The userinfo is dropped rather than moved into the URL's query string. JDBC has no
- * equivalent of {@code user:password@host}, the userinfo is already supplied through
- * {@code spring.datasource.username} and {@code spring.datasource.password}, and leaving it
- * in the URL would put the password in plain text in every connection error message.
+ * <p>The value is otherwise used verbatim. {@code DATABASE_URL} must be a full JDBC URL,
+ * including the {@code jdbc:} prefix - no prefix is added, and a {@code user:password@}
+ * userinfo section is not stripped.
  */
 public class DotEnvEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
@@ -35,8 +29,6 @@ public class DotEnvEnvironmentPostProcessor implements EnvironmentPostProcessor,
 
     /** Name Spring Boot gives the source it attaches first; its constant is not public. */
     private static final String ATTACHED_SOURCE = "configurationProperties";
-
-    private static final Pattern URI_SCHEME = Pattern.compile("^(postgres|postgresql|mysql|mariadb)://");
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
@@ -104,19 +96,7 @@ public class DotEnvEnvironmentPostProcessor implements EnvironmentPostProcessor,
         if (!(value instanceof String text)) {
             return value;
         }
-        String trimmed = stripQuotes(text.trim());
-        Matcher matcher = URI_SCHEME.matcher(trimmed);
-        return matcher.find() ? toJdbcUrl(matcher.group(1), trimmed) : trimmed;
-    }
-
-    private String toJdbcUrl(String scheme, String uri) {
-        String rest = uri.substring(scheme.length() + 3);
-        int query = rest.indexOf('?');
-        int userInfo = rest.indexOf('@');
-        if (userInfo >= 0 && (query < 0 || userInfo < query)) {
-            rest = rest.substring(userInfo + 1);
-        }
-        return "jdbc:" + scheme + "://" + rest;
+        return stripQuotes(text.trim());
     }
 
     private String stripQuotes(String value) {

@@ -15,38 +15,15 @@ class DotEnvEnvironmentPostProcessorTest {
     private final DotEnvEnvironmentPostProcessor postProcessor = new DotEnvEnvironmentPostProcessor();
 
     @Test
-    void convertsNeonConnectionStringAndDropsTheUserinfo() {
+    void leavesTheUrlVerbatim() {
         StandardEnvironment environment = environmentWith(Map.of("DATABASE_URL",
-                "\"postgresql://neondb_owner:secret@ep-foo.us-east-2.aws.neon.tech/neondb"
-                        + "?sslmode=require&channel_binding=require\""));
+                "jdbc:postgresql://ep-foo.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"));
 
         postProcessor.postProcessEnvironment(environment, null);
 
         assertThat(environment.getProperty("DATABASE_URL"))
                 .isEqualTo("jdbc:postgresql://ep-foo.us-east-2.aws.neon.tech/neondb"
                         + "?sslmode=require&channel_binding=require");
-    }
-
-    @Test
-    void keepsTheQueryStringWhenThereIsNoUserinfo() {
-        StandardEnvironment environment = environmentWith(
-                Map.of("DATABASE_URL", "postgresql://ep-foo.us-east-2.aws.neon.tech/neondb?sslmode=require"));
-
-        postProcessor.postProcessEnvironment(environment, null);
-
-        assertThat(environment.getProperty("DATABASE_URL"))
-                .isEqualTo("jdbc:postgresql://ep-foo.us-east-2.aws.neon.tech/neondb?sslmode=require");
-    }
-
-    @Test
-    void leavesAUrlThatIsAlreadyJdbcAlone() {
-        StandardEnvironment environment = environmentWith(
-                Map.of("DATABASE_URL", "jdbc:postgresql://localhost:5432/neondb?sslmode=disable"));
-
-        postProcessor.postProcessEnvironment(environment, null);
-
-        assertThat(environment.getProperty("DATABASE_URL"))
-                .isEqualTo("jdbc:postgresql://localhost:5432/neondb?sslmode=disable");
     }
 
     @Test
@@ -63,14 +40,13 @@ class DotEnvEnvironmentPostProcessorTest {
 
     @Test
     void letsAHigherPrecedenceSourceWin() {
-        StandardEnvironment environment = environmentWith(
-                Map.of("DATABASE_URL", "\"postgresql://user:secret@host/neondb?sslmode=require\""));
+        StandardEnvironment environment = environmentWith(Map.of("JWT_SECRET", "\"from-dot-env\""));
         environment.getPropertySources()
-                .addFirst(new MapPropertySource("override", Map.of("DATABASE_URL", "jdbc:postgresql://winnr")));
+                .addFirst(new MapPropertySource("override", Map.of("JWT_SECRET", "from-environment")));
 
         postProcessor.postProcessEnvironment(environment, null);
 
-        assertThat(environment.getProperty("DATABASE_URL")).isEqualTo("jdbc:postgresql://winnr");
+        assertThat(environment.getProperty("JWT_SECRET")).isEqualTo("from-environment");
     }
 
     @Test

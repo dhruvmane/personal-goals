@@ -31,10 +31,9 @@ and CRUD for goals and users.
 
    `.env` is gitignored. Never commit it.
 
-   The connection string can be pasted in exactly as Neon gives it - quoted or not,
-   with or without the `jdbc:` prefix. `DotEnvEnvironmentPostProcessor` converts the
-   `postgresql://` form, and ignores the `user:password@` part since the credentials
-   come from `DATABASE_USER` and `DATABASE_PASSWORD`.
+   `DATABASE_URL` must be a full JDBC URL, including the `jdbc:` prefix - it is used
+   exactly as written, so a bare `postgresql://` string from Neon will not work. Put the
+   credentials in `DATABASE_USER` and `DATABASE_PASSWORD` rather than in the URL.
 
 3. Run it. Flyway creates the `users` and `goals` tables on first boot:
 

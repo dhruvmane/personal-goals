@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.personalgoals.ApiIntegrationTest
 -------------------------------------------------------------------------------
-Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 18.60 s -- in com.personalgoals.ApiIntegrationTest
+Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 18.68 s -- in com.personalgoals.ApiIntegrationTest
